@@ -1,49 +1,26 @@
 import { Request, Response } from 'express';
-import { VendaPaes, VendaItem } from '../model/vendaPaesModel';
-import { EstoquePaes } from '../model/estoquePaesModel';
-import { ModalidadePaes } from '../model/modalidadePaesModel';
+import { VendaService } from '../service/VendaService';
+const vendaService = new VendaService();
 
-let vendas: VendaPaes[] = [];
-let estoques: EstoquePaes[] = [];
-let modalidades: ModalidadePaes[] = [];
-
-export const createVenda = (req: Request, res: Response) => {
-  const { cpf, itens } = req.body;
-
-  let total = 0;
-  let vendaItens: VendaItem[] = [];
-
-  for (let item of itens) {
-    const estoque = estoques.find(est => est.id === item.estoquePaesID);
-
-    if (estoque && estoque.quantidade >= item.quantidade) {
-      estoque.quantidade -= item.quantidade;
-      const modalidade = modalidades.find(mod => mod.id === estoque.modalidadeID);
-      total += item.quantidade * estoque.precoVenda;
-      vendaItens.push({ ...item, nome: modalidade ? modalidade.nome : "Desconhecido" });
-    } else {
-      return res.status(400).json({ message: 'Quantidade insuficiente no estoque!' });
+export function realizarVenda(req: Request, res: Response) {
+    try {
+        const venda = vendaService.fazerVenda(req.body);
+        res.status(200).json({ mensagem: "Venda realizada com sucesso.", venda });
+    } catch (error: any) {
+        res.status(400).json({ erro: `Erro ao realizar venda: ${error.message}` });
     }
-  }
+}
 
-  const novaVenda: VendaPaes = {
-    idVenda: vendas.length + 1,
-    cpf,
-    itens: vendaItens,
-    total
-  };
-
-  vendas.push(novaVenda);
-  res.status(201).json(novaVenda);
-};
-
-export const getVendaById = (req: Request, res: Response) => {
-  const idVenda = parseInt(req.params.id);
-  const venda = vendas.find(v => v.idVenda === idVenda);
-
-  if (venda) {
-    res.status(200).json(venda);
-  } else {
-    res.status(404).json({ message: 'Venda não encontrada!' });
-  }
-};
+export function recuperarVendaPorID(req: Request, res: Response) {
+    try {
+        const id = parseInt(req.params.id);
+        const venda = vendaService.consultarVenda(id);
+        if (venda) {
+            res.status(200).json({ mensagem: `Registro da venda encontrado para o ID: ${id}.`, venda });
+        } else {
+            res.status(404).json({ mensagem: "Registro da venda não encontrado." });
+        }
+    } catch (error: any) {
+        res.status(400).json({ erro: `Erro ao buscar registro da venda: ${error.message}` });
+    }
+}

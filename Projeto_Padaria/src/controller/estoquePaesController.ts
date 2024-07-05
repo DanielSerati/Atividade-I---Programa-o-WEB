@@ -1,60 +1,57 @@
-import { Request, Response } from 'express';
-import { EstoquePaes } from '../model/estoquePaesModel';
+import { Request, Response } from "express";
+import { EstoqueService } from "../service/EstoqueService";
+const estoqueService = new EstoqueService();
 
-let estoques: EstoquePaes[] = [];
-
-export const getTodosEstoque = (req: Request, res: Response) => {
-  res.status(200).json(estoques);
-};
-
-export const createEstoque = (req: Request, res: Response) => {
-  const newEstoque: EstoquePaes = {
-      id: estoques.length + 1,
-      modalidadeID: req.body.modalidadeID,
-      quantidade: req.body.quantidade,
-      precoVenda: req.body.precoVenda,
-      precoPromocional: 0
-  };
-  estoques.push(newEstoque);
-  res.status(201).json({ message: 'Estoque adicionado com sucesso!' });
-};
-
-export const updateEstoque = (req: Request, res: Response) => {
-  const { id, quantidade, precoVenda } = req.body;
-  const estoqueIndex = estoques.findIndex(est => est.id === id);
-
-  if (estoqueIndex >= 0) {
-    estoques[estoqueIndex].quantidade += quantidade;
-    estoques[estoqueIndex].precoVenda = precoVenda;
-    res.status(200).json({ message: 'Estoque atualizado com sucesso!' });
-  } else {
-    res.status(400).json({ message: 'Estoque não encontrado!' });
-  }
-};
-
-export const deleteEstoque = (req: Request, res: Response) => {
-  const { id, quantidade } = req.body;
-  const estoqueIndex = estoques.findIndex(est => est.id === id);
-
-  if (estoqueIndex >= 0) {
-    if (estoques[estoqueIndex].quantidade >= quantidade) {
-      estoques[estoqueIndex].quantidade -= quantidade;
-      res.status(200).json({ message: 'Quantidade removida do estoque com sucesso!' });
-    } else {
-      res.status(400).json({ message: 'Quantidade insuficiente no estoque!' });
+export function criarEstoque(req: Request, res: Response) {
+    try {
+        const novoEstoque = estoqueService.createEstoque(req.body);
+        res.status(200).json({ mensagem: "Novo estoque adicionado com sucesso.", produto: novoEstoque });
+    } catch (error: any) {
+        res.status(400).json({ mensagem: `Erro ao adicionar estoque: ${error.message}` });
     }
-  } else {
-    res.status(400).json({ message: 'Estoque não encontrado!' });
-  }
-};
+}
 
-export const getEstoqueById = (req: Request, res: Response) => {
-  const id = parseInt(req.params.id);
-  const estoque = estoques.find(est => est.id === id);
+export function recuperarTodosOsEstoques(req: Request, res: Response) {
+    try {
+        res.status(200).json(estoqueService.getAllEstoques());
+    } catch (error: any) {
+        res.status(400).json({ mensagem: `Erro ao recuperar estoques: ${error.message}` });
+    }
+}
 
-  if (estoque) {
-    res.status(200).json(estoque);
-  } else {
-    res.status(404).json({ message: 'Estoque não encontrado!' });
-  }
-};
+export function recuperarEstoquePorID(req: Request, res: Response) {
+    try {
+        const id = parseInt(req.params.id);
+        const produto = estoqueService.getEstoqueById(id);
+        if (produto) {
+            res.status(200).json({ mensagem: `Estoque encontrado para o ID: ${id}.`, produto });
+        } else {
+            res.status(404).json({ mensagem: "Estoque não encontrado." });
+        }
+    } catch (error: any) {
+        res.status(400).json({ mensagem: `Erro ao buscar estoque por ID: ${error.message}` });
+    }
+}
+
+export function alterarEstoque(req: Request, res: Response) {
+    try {
+        const novoEstoque = estoqueService.updateEstoque(req.body);
+        res.status(200).json({ mensagem: "Estoque alterado com sucesso.", produto: novoEstoque });
+    } catch (error: any) {
+        res.status(400).json({ mensagem: `Erro ao alterar estoque: ${error.message}` });
+    }
+}
+
+export function deletarEstoque(req: Request, res: Response) {
+    try {
+        const { id, quantidade } = req.body;
+        const sucesso = estoqueService.deleteEstoque(id, quantidade);
+        if (sucesso) {
+            res.status(200).json({ mensagem: "Estoque removido com sucesso." });
+        } else {
+            res.status(400).json({ mensagem: "Erro ao deletar estoque." });
+        }
+    } catch (error: any) {
+        res.status(400).json({ mensagem: `Erro ao deletar estoque: ${error.message}` });
+    }
+}

@@ -1,18 +1,18 @@
 import { VendaPaes } from '../model/vendaPaesModel';
 
 export class VendaRepository {
-  private vendas: VendaPaes[] = [];
+    private vendas: VendaPaes[] = [];
 
-  findAll(): VendaPaes[] {
-    return this.vendas;
-  }
+    findAll(): VendaPaes[] {
+        return this.vendas;
+    }
 
-  findById(idVenda: number): VendaPaes | undefined {
-    return this.vendas.find(venda => venda.idVenda === idVenda);
-  }
+    findById(id: number): VendaPaes | undefined {
+        return this.vendas.find(v => v.id === id);
+    }
 
-  save(venda: VendaPaes): VendaPaes {
-    this.vendas.push(venda);
-    return venda;
-  }
+    save(venda: VendaPaes): VendaPaes {
+        this.vendas.push(venda);
+        return venda;
+    }
 }
